@@ -8,7 +8,7 @@ file = open(ValidWordsPath)
 for line in file:
     unsortedWords.append(line.strip())
 file.close()
-#print(unsortedWords)
+print(unsortedWords)
 
 #Create list of list for each letter
 letterarr = [[] for i in range(0, 26)]
@@ -35,7 +35,7 @@ subset0 = []
 for word in letterarr[0]:
     if word[0] == 'a':
         subset0.append(word)
-print(subset0)
+print("a____ Inital Subset:" + str(subset0))
 
 subset1 = []
 for word in subset0:
