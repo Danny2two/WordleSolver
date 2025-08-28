@@ -51,8 +51,8 @@ class IIVectorizedGuess(VectorizedWord):
         grey: list of known false letters ie [X, Z, U]
         '''
         self.location = np.zeros((26 * 5,1)) #will be venctor of known good "starting point"
-        self.green = word
-        self.yellow = yellow
+        self.green = ["_"]*5
+        self.yellow = []
         self.grey = grey
         self.addGreens(word)
         self.addYellows(yellow)
@@ -65,6 +65,9 @@ class IIVectorizedGuess(VectorizedWord):
                 #print("blank")
                 pass
             else:
+                if ch in self.yellow:
+                    self.yellow.remove(ch)
+                self.green[index] = ch
                 letter = ord(ch)
                 indexOfLetter = letter - 97
                 self.location[(26*index):(26*(index+1))] = -1 #We know the index is nothing but the letter we just found, set it all to -1
@@ -72,8 +75,8 @@ class IIVectorizedGuess(VectorizedWord):
                 indexes = np.arange(5) * 26
                 indexes+=indexOfLetter
                 for ind in indexes:
-                    if self.location[ind] == 0.5:
-                        self.location[ind] = 0
+                    if self.location[ind] == 0.5: #reset any yellows
+                        self.location[ind] = 0.0
             index += 1
 
     def addYellows(self, yellowSTR: str):
@@ -84,6 +87,9 @@ class IIVectorizedGuess(VectorizedWord):
                 #print("blank")
                 pass
             else:
+                if ch not in self.yellow:
+                    self.yellow.append(ch)
+                    print(self.yellow)
                 letter = ord(ch)
                 indexOfLetter = letter - 97
                 self.location[indexOfLetter + (26*index)] =-1
@@ -98,7 +104,9 @@ class IIVectorizedGuess(VectorizedWord):
 
     def addGrey(self, greys: list[str]):
         print("Adding grey")
-        self.grey+= greys
+        for i in greys:
+            if i not in  self.grey:
+                self.grey.append(i)
         print(self.grey)
         for stri in self.grey:
             ch = stri[0]
@@ -151,40 +159,38 @@ def guessMaker(guessVec: IIVectorizedGuess, rWords: list[IIVectorizedWord]):
     for word in rWords:
         skip = False
         index += 1
-        #print("Testing Word: " + word)
-        '''
-        for c in guessVec.grey: #if the word has a grey letter,
-            #print(c)
-            if c in word.word and c not in guessVec.green:
-                #print(word + " deleted")
-                if word.word.find(c) != guessVec.green.find(c):
-                    del rWords[index]
-                    index -=1 
-                    skip=True
-                    break
-                    '''
-        for i in range(len(guessLoc)): #this needs work
-            if abs(guessLoc[i] - word.location[i]) >=2  :
-                print(word.word + " deleted")
-                del rWords[index]
-                index -=1 
+        print("Testing Word: " + word.word)
+        
+        for i in range(len(guessVec.green)):
+            if guessVec.green[i]!= "_" and guessVec.green[i] != word.word[i]:
+                print(word.word + " deleted for lack green")
+                rWords.remove(word)
                 skip=True
                 break
-
-
+        if not skip:
+            for c in guessVec.yellow:
+                print("char? " + c)
+                if c not in word.word:
+                    print(word.word + " deleted for lack yellow")
+                    rWords.remove(word)
+                    skip=True
+                    break
+        print("rwords: " + str(len(rWords)))
         if skip:
-            #print("skpping")
+            print("skpping")
             pass
         else:
+            print("ELSE HAPPENED")
             testingword = word
             dist = eucDist(guessVec, testingword)
             if len(listoWords) <10:
                 listoWords.append([dist, word.word])
+                print("list still short")
             else:
                 for i in range(len(listoWords)):
                     if dist <= listoWords[i][0]:
                         listoWords[i] = [dist, word.word]
-                        #print("Adding to top 10:" + word)
+                        print("long but adding Adding to top 10:" + word.word)
                         break
     return([listoWords, rWords])
 
@@ -212,6 +218,7 @@ if __name__ == "__main__":
     #print(guessGREEN)
 
     guessInit = IIVectorizedGuess(guessGREEN,guessYELLLOW,guessGREY)
+    input()
     results = guessMaker(guessInit,unsortedWords)
     print(results[0])
     print(guessInit)
@@ -220,10 +227,10 @@ if __name__ == "__main__":
     input("Enter to continue")
     cont = True
     while cont:
-        guessGREEN = input("Enter the known letters, unknown letters as an _: ").lower()
-        guessYELLLOW = input("Enter the yellows, unknown letters as an _: ").lower()
+        guessGREEN = input("Enter the known letters, unknown letters as an _: ").lower().strip()
+        guessYELLLOW = input("Enter the yellows, unknown letters as an _: ").lower().strip()
         print("if a letter is green do not add it to greys incase of repeat")
-        guessGREY = input("Enter NEW greys, space seperated: ").split(" ")
+        guessGREY = input("Enter NEW greys, space seperated: ").strip().split(" ")
 
         guessInit.addGreens(guessGREEN)
         guessInit.addYellows(guessYELLLOW)
