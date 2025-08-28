@@ -6,23 +6,15 @@ ValidWordsPath= './valid_wordle_words.txt'
 green = 1
 yellow = 0.5
 
-#Open provided file, get word from each line, append to list of all words, close file.
-unsortedWords= []
-file = open(ValidWordsPath)
-for line in file:
-    unsortedWords.append(line.strip())
-file.close()
-#print(unsortedWords)
-
 class VectorizedWord:
-    def __init__(self,word):
+    def __init__(self,word: str):
         self.location = np.zeros((26,5))
 
     def get_loc(self):
         return self.location
 
 class IVectorizedWord(VectorizedWord):
-    def __init__(self,word):
+    def __init__(self,word: str):
         self.location = np.zeros((26,5))
         index = 0
         for ch in word:
@@ -37,6 +29,7 @@ class IVectorizedWord(VectorizedWord):
     
 class IIVectorizedWord(VectorizedWord):
     def __init__(self,word):
+        self.word=word
         self.location = np.ones((26 * 5,1))
         self.location *= -1
         index = 0
@@ -140,53 +133,75 @@ class IIVectorizedGuess(VectorizedWord):
         return "Slot 1: " + str1 + "\nSlot 2: " + str2 + "\nSlot 3: " + str3 +"\nSlot 4: " + str4 +"\nSlot 5: " + str5
         
 
-def eucDist(VecWord: IIVectorizedWord, VecWord2: IIVectorizedWord):
+def eucDist(VecWord: VectorizedWord, VecWord2: VectorizedWord):
     dist = 0
     for i in range(26 * 5):
         dist += np.pow((VecWord.location[i] - VecWord2.location[i]),2)
     return np.sqrt(dist)
 
-def guessMaker(guessVec: IIVectorizedGuess, rWords: list[str]):
+def guessMaker(guessVec: IIVectorizedGuess, rWords: list[IIVectorizedWord]):
     '''
     Places the yellow in possible spots and sees whats near by in the vector space
     guessVec: The current guess and the info it holds
     rWords: remaining words list
     '''
+    guessLoc = guessVec.location
     listoWords = []
     index = -1
     for word in rWords:
         skip = False
         index += 1
         #print("Testing Word: " + word)
-        for c in guessVec.grey: #if the word has a grey letter, skip it and remove it from list of words
+        '''
+        for c in guessVec.grey: #if the word has a grey letter,
             #print(c)
-            if c in word and c not in guessVec.green:
+            if c in word.word and c not in guessVec.green:
                 #print(word + " deleted")
-                if word.find(c) != guessVec.green.find(c):
-                    if word =="shone":
-                        print("Shone deleted")
+                if word.word.find(c) != guessVec.green.find(c):
                     del rWords[index]
                     index -=1 
                     skip=True
                     break
+                    '''
+        for i in range(len(guessLoc)): #this needs work
+            if abs(guessLoc[i] - word.location[i]) >=2  :
+                print(word.word + " deleted")
+                del rWords[index]
+                index -=1 
+                skip=True
+                break
+
+
         if skip:
             #print("skpping")
             pass
         else:
-            testingword = IIVectorizedWord(word)
+            testingword = word
             dist = eucDist(guessVec, testingword)
             if len(listoWords) <10:
-                listoWords.append([dist, word])
+                listoWords.append([dist, word.word])
             else:
                 for i in range(len(listoWords)):
                     if dist <= listoWords[i][0]:
-                        listoWords[i] = [dist, word]
+                        listoWords[i] = [dist, word.word]
                         #print("Adding to top 10:" + word)
                         break
     return([listoWords, rWords])
 
 
 if __name__ == "__main__":
+    print("Initalizing Word List")
+
+    #Open provided file, get word from each line, append to list of all words, close file.
+    unsortedWords= []
+    file = open(ValidWordsPath)
+    for line in file:
+        #unsortedWords.append(line.strip())
+        unsortedWords.append(IIVectorizedWord(str(line.strip()).lower()))
+    file.close()
+    #print(unsortedWords)
+
+
     print("Vector Based Wordle Guess Maker")
     
     guessGREEN = input("Enter the known letters, unknown letters as an _: ").lower()
@@ -220,7 +235,7 @@ if __name__ == "__main__":
         print(guessInit)
         remainingWords = results[1]
 
-        if input("Enter to continue, Q to exit: ").lower == "q":
+        if(input("Enter to continue, Q to exit: ").lower() == "q"):
             cont = False
         
         
