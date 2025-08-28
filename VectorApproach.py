@@ -58,29 +58,38 @@ class IIVectorizedGuess(VectorizedWord):
         grey: list of known false letters ie [X, Z, U]
         '''
         self.location = np.zeros((26 * 5,1)) #will be venctor of known good "starting point"
+        self.green = word
         self.yellow = yellow
         self.grey = grey
+        self.addGreens(word)
+        self.addYellows(yellow)
+        self.addGrey(grey)
+
+    def addGreens(self,greenSTR: str):
         index = 0
-        for ch in word:
+        for ch in str(greenSTR):
             if ch == "_":
-                print("blank")
-                #pass
+                #print("blank")
+                pass
             else:
                 letter = ord(ch)
                 indexOfLetter = letter - 97
-                self.location[(26*index):(26*(index+1))] = -1
+                self.location[(26*index):(26*(index+1))] = -1 #We know the index is nothing but the letter we just found, set it all to -1
                 self.location[indexOfLetter + (26*index)] =1
+                indexes = np.arange(5) * 26
+                indexes+=indexOfLetter
+                for ind in indexes:
+                    if self.location[ind] == 0.5:
+                        self.location[ind] = 0
             index += 1
-        self.addYellows(yellow)
-        self.addGrey(grey)
 
     def addYellows(self, yellowSTR: str):
         print("Adding yellows")
         index = 0
         for ch in yellowSTR:
             if ch == "_":
-                print("blank")
-                #pass
+                #print("blank")
+                pass
             else:
                 letter = ord(ch)
                 indexOfLetter = letter - 97
@@ -92,22 +101,31 @@ class IIVectorizedGuess(VectorizedWord):
                         self.location[ind] = 0.5
                         
             index += 1
-        print(str(self.location))
+        #print(str(self.location))
 
     def addGrey(self, greys: list[str]):
         print("Adding grey")
         self.grey+= greys
-        for str in greys:
-            ch = str[0]
+        print(self.grey)
+        for stri in self.grey:
+            ch = stri[0]
             if ch == "_":
-                print("blank")
-                #pass
+                #print("blank")
+                pass
             else:
                 letter = ord(ch)
                 indexOfLetter = letter - 97
                 indexes = np.arange(5) * 26
                 indexes+=indexOfLetter
-                np.put(self.location, indexes, [-1,-1,-1,-1,-1])
+                for i in indexes:
+                    print(i)
+                    if self.location[i] ==1:
+                        pass
+                    if self.location[i] > 0:
+                        pass
+                    else:
+                        self.location[i] = -1
+                #np.put(self.location, indexes, [-1,-1,-1,-1,-1])
         #print(self.location)
             
     def get_loc(self):
@@ -128,32 +146,81 @@ def eucDist(VecWord: IIVectorizedWord, VecWord2: IIVectorizedWord):
         dist += np.pow((VecWord.location[i] - VecWord2.location[i]),2)
     return np.sqrt(dist)
 
-def guessMaker(guessVec: IIVectorizedGuess, rWords):
+def guessMaker(guessVec: IIVectorizedGuess, rWords: list[str]):
     '''
     Places the yellow in possible spots and sees whats near by in the vector space
     guessVec: The current guess and the info it holds
     rWords: remaining words list
     '''
+    listoWords = []
+    index = -1
+    for word in rWords:
+        skip = False
+        index += 1
+        #print("Testing Word: " + word)
+        for c in guessVec.grey: #if the word has a grey letter, skip it and remove it from list of words
+            #print(c)
+            if c in word and c not in guessVec.green:
+                #print(word + " deleted")
+                if word.find(c) != guessVec.green.find(c):
+                    if word =="shone":
+                        print("Shone deleted")
+                    del rWords[index]
+                    index -=1 
+                    skip=True
+                    break
+        if skip:
+            #print("skpping")
+            pass
+        else:
+            testingword = IIVectorizedWord(word)
+            dist = eucDist(guessVec, testingword)
+            if len(listoWords) <10:
+                listoWords.append([dist, word])
+            else:
+                for i in range(len(listoWords)):
+                    if dist <= listoWords[i][0]:
+                        listoWords[i] = [dist, word]
+                        #print("Adding to top 10:" + word)
+                        break
+    return([listoWords, rWords])
 
-#word1 = IIVectorizedWord("boaty")
-#print(word1.get_loc())
 
-guess1 = IIVectorizedGuess("__a_t","s____", ["u","d","i",'o','l','p','h','w','y','k'])#print(guess1.get_loc())
-print(str(guess1))
+if __name__ == "__main__":
+    print("Vector Based Wordle Guess Maker")
+    
+    guessGREEN = input("Enter the known letters, unknown letters as an _: ").lower()
+    guessYELLLOW = input("Enter the yellows, unknown letters as an _: ").lower()
+    print("if a letter is green do not add it to greys incase of repeat")
+    guessGREY = input("Enter the greys, space seperated: ").split(" ")
 
-listoWords = [[]]*10
-index = -1
-for word in unsortedWords:
-    index += 1
-    #print("Testing Word: " + word)
-    testingword = IIVectorizedWord(word)
-    dist = eucDist(guess1, testingword)
-    if index <10:
-        listoWords[index] = [dist, word]
-    else:
-        for i in range(len(listoWords)):
-            if dist <= listoWords[i][0]:
-                listoWords[i] = [dist, word]
-                #print("Adding to top 10:" + word)
-                break
-print(str(listoWords))
+    #print(guessGREEN)
+
+    guessInit = IIVectorizedGuess(guessGREEN,guessYELLLOW,guessGREY)
+    results = guessMaker(guessInit,unsortedWords)
+    print(results[0])
+    print(guessInit)
+
+    remainingWords = results[1]
+    input("Enter to continue")
+    cont = True
+    while cont:
+        guessGREEN = input("Enter the known letters, unknown letters as an _: ").lower()
+        guessYELLLOW = input("Enter the yellows, unknown letters as an _: ").lower()
+        print("if a letter is green do not add it to greys incase of repeat")
+        guessGREY = input("Enter NEW greys, space seperated: ").split(" ")
+
+        guessInit.addGreens(guessGREEN)
+        guessInit.addYellows(guessYELLLOW)
+        guessInit.addGrey(guessGREY)
+
+        results = guessMaker(guessInit,unsortedWords)
+        print(results[0])
+        print("With greys: " + str(guessInit.grey))
+        print(guessInit)
+        remainingWords = results[1]
+
+        if input("Enter to continue, Q to exit: ").lower == "q":
+            cont = False
+        
+        
