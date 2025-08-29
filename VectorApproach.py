@@ -80,7 +80,7 @@ class IIVectorizedGuess(VectorizedWord):
             index += 1
 
     def addYellows(self, yellowSTR: str):
-        print("Adding yellows")
+        #print("Adding yellows")
         index = 0
         for ch in yellowSTR:
             if ch == "_":
@@ -89,7 +89,7 @@ class IIVectorizedGuess(VectorizedWord):
             else:
                 if ch not in self.yellow:
                     self.yellow.append(ch)
-                    print(self.yellow)
+                    #print(self.yellow)
                 letter = ord(ch)
                 indexOfLetter = letter - 97
                 self.location[indexOfLetter + (26*index)] =-1
@@ -103,11 +103,11 @@ class IIVectorizedGuess(VectorizedWord):
         #print(str(self.location))
 
     def addGrey(self, greys: list[str]):
-        print("Adding grey")
+        #print("Adding grey")
         for i in greys:
             if i not in  self.grey:
                 self.grey.append(i)
-        print(self.grey)
+        #print(self.grey)
         for stri in self.grey:
             ch = stri[0]
             if ch == "_":
@@ -159,38 +159,47 @@ def guessMaker(guessVec: IIVectorizedGuess, rWords: list[IIVectorizedWord]):
     for word in rWords:
         skip = False
         index += 1
-        print("Testing Word: " + word.word)
+        #print("Testing Word: " + word.word)
         
         for i in range(len(guessVec.green)):
             if guessVec.green[i]!= "_" and guessVec.green[i] != word.word[i]:
-                print(word.word + " deleted for lack green")
+                #print(word.word + " deleted for lack green")
                 rWords.remove(word)
                 skip=True
                 break
         if not skip:
             for c in guessVec.yellow:
-                print("char? " + c)
+                #print("char? " + c)
                 if c not in word.word:
-                    print(word.word + " deleted for lack yellow")
+                    #print(word.word + " deleted for lack yellow")
                     rWords.remove(word)
                     skip=True
                     break
-        print("rwords: " + str(len(rWords)))
+        if not skip:
+            for c in guessVec.grey:
+                if c in word.word:
+                    if c not in guessVec.green or c not in guessVec.yellow:
+                        #print(word.word + " deleted for greys")
+                        rWords.remove(word)
+                        skip=True
+                        break
+        #print("rwords: " + str(len(rWords)))
         if skip:
-            print("skpping")
+            #print("skpping")
             pass
         else:
-            print("ELSE HAPPENED")
+            #print("ELSE HAPPENED")
             testingword = word
             dist = eucDist(guessVec, testingword)
             if len(listoWords) <10:
                 listoWords.append([dist, word.word])
-                print("list still short")
+                #print("list still short")
+                listoWords.sort(key= lambda lit: lit[0],reverse=False)
             else:
                 for i in range(len(listoWords)):
                     if dist <= listoWords[i][0]:
                         listoWords[i] = [dist, word.word]
-                        print("long but adding Adding to top 10:" + word.word)
+                        #print("long but adding Adding to top 10:" + word.word)
                         break
     return([listoWords, rWords])
 
