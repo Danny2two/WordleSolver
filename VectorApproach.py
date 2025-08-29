@@ -191,10 +191,11 @@ def guessMaker(guessVec: IIVectorizedGuess, rWords: list[IIVectorizedWord]):
             #print("ELSE HAPPENED")
             testingword = word
             dist = eucDist(guessVec, testingword)
-            if len(listoWords) <10:
+            if len(listoWords) <11:
                 listoWords.append([dist, word.word])
                 #print("list still short")
-                listoWords.sort(key= lambda lit: lit[0],reverse=False)
+                if len(listoWords) ==11:
+                    listoWords.sort(key= lambda lit: lit[0],reverse=False)
             else:
                 for i in range(len(listoWords)):
                     if dist <= listoWords[i][0]:
@@ -205,8 +206,7 @@ def guessMaker(guessVec: IIVectorizedGuess, rWords: list[IIVectorizedWord]):
 
 
 if __name__ == "__main__":
-    print("Initalizing Word List")
-
+    print("Initalizing Word List.")
     #Open provided file, get word from each line, append to list of all words, close file.
     unsortedWords= []
     file = open(ValidWordsPath)
@@ -214,10 +214,10 @@ if __name__ == "__main__":
         #unsortedWords.append(line.strip())
         unsortedWords.append(IIVectorizedWord(str(line.strip()).lower()))
     file.close()
-    #print(unsortedWords)
+    print("Added " + str(len(unsortedWords)) + " words to list." )
 
 
-    print("Vector Based Wordle Guess Maker")
+    print("-=#Vector Based Wordle Guess Maker#=-")
     
     guessGREEN = input("Enter the known letters, unknown letters as an _: ").lower()
     guessYELLLOW = input("Enter the yellows, unknown letters as an _: ").lower()
@@ -227,7 +227,6 @@ if __name__ == "__main__":
     #print(guessGREEN)
 
     guessInit = IIVectorizedGuess(guessGREEN,guessYELLLOW,guessGREY)
-    input()
     results = guessMaker(guessInit,unsortedWords)
     print(results[0])
     print(guessInit)
