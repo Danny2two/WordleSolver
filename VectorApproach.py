@@ -104,30 +104,33 @@ class IIVectorizedGuess(VectorizedWord):
 
     def addGrey(self, greys: list[str]):
         #print("Adding grey")
-        for i in greys:
-            if i not in  self.grey:
-                self.grey.append(i)
-        #print(self.grey)
-        for stri in self.grey:
-            ch = stri[0]
-            if ch == "_":
-                #print("blank")
-                pass
-            else:
-                letter = ord(ch)
-                indexOfLetter = letter - 97
-                indexes = np.arange(5) * 26
-                indexes+=indexOfLetter
-                for i in indexes:
-                    print(i)
-                    if self.location[i] ==1:
-                        pass
-                    if self.location[i] > 0:
-                        pass
-                    else:
-                        self.location[i] = -1
-                #np.put(self.location, indexes, [-1,-1,-1,-1,-1])
-        #print(self.location)
+        if greys != ['']:    
+            for i in greys:
+                if i not in  self.grey:
+                    self.grey.append(i)
+            #print(self.grey)
+            for stri in self.grey:
+                ch = stri[0]
+                if ch == "_":
+                    #print("blank")
+                    pass
+                else:
+                    letter = ord(ch)
+                    indexOfLetter = letter - 97
+                    indexes = np.arange(5) * 26
+                    indexes+=indexOfLetter
+                    for i in indexes:
+                        print(i)
+                        if self.location[i] ==1:
+                            pass
+                        elif self.location[i] > 0:
+                            pass
+                        else:
+                            self.location[i] = -1
+                    #np.put(self.location, indexes, [-1,-1,-1,-1,-1])
+            #print(self.location)
+        else:
+            print("Empty Greys")
             
     def get_loc(self):
         return self.location
@@ -149,16 +152,14 @@ def eucDist(VecWord: VectorizedWord, VecWord2: VectorizedWord):
 
 def guessMaker(guessVec: IIVectorizedGuess, rWords: list[IIVectorizedWord]):
     '''
-    Places the yellow in possible spots and sees whats near by in the vector space
     guessVec: The current guess and the info it holds
     rWords: remaining words list
     '''
     guessLoc = guessVec.location
     listoWords = []
-    index = -1
+    isSort = False
     for word in rWords:
         skip = False
-        index += 1
         #print("Testing Word: " + word.word)
         
         for i in range(len(guessVec.green)):
@@ -176,13 +177,17 @@ def guessMaker(guessVec: IIVectorizedGuess, rWords: list[IIVectorizedWord]):
                     skip=True
                     break
         if not skip:
-            for c in guessVec.grey:
-                if c in word.word:
-                    if c not in guessVec.green or c not in guessVec.yellow:
-                        #print(word.word + " deleted for greys")
-                        rWords.remove(word)
-                        skip=True
-                        break
+            if guessVec.grey != ['']:
+                for c in guessVec.grey:
+                    if c in word.word:
+                        if c not in guessVec.green: 
+                            if c not in guessVec.yellow:
+                                print(word.word + " deleted for grey: " + c)
+                                print("Yellow: " + str(guessVec.yellow))
+                                print("Green: " + str(guessVec.green))
+                                rWords.remove(word)
+                                skip=True
+                                break
         #print("rwords: " + str(len(rWords)))
         if skip:
             #print("skpping")
@@ -196,12 +201,15 @@ def guessMaker(guessVec: IIVectorizedGuess, rWords: list[IIVectorizedWord]):
                 #print("list still short")
                 if len(listoWords) ==11:
                     listoWords.sort(key= lambda lit: lit[0],reverse=False)
+                    isSort = True
             else:
                 for i in range(len(listoWords)):
                     if dist <= listoWords[i][0]:
                         listoWords[i] = [dist, word.word]
                         #print("long but adding Adding to top 10:" + word.word)
                         break
+    if not isSort:
+        listoWords.sort(key= lambda lit: lit[0],reverse=False)
     return([listoWords, rWords])
 
 
