@@ -134,7 +134,7 @@ class IIVectorizedGuess(VectorizedWord):
                     indexes = np.arange(5) * 26
                     indexes+=indexOfLetter
                     for i in indexes:
-                        print(i)
+                        #print(i)
                         if self.location[i] ==1:
                             pass
                         elif self.location[i] > 0:
